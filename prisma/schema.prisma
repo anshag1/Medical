@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  genericName String
+  manufacturer String
+  category    String
+  subcategory String?
+  form        String
+  strength    String
+  packSize    String
+  description String   @db.Text
+  composition String   @db.Text
+  indications String   @db.Text
+  dosage      String   @db.Text
+  sideEffects String?  @db.Text
+  storage     String?
+  images      Json     @default("[]")
+  isFeatured  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  tags        String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([slug])
+  @@index([isActive])
+  @@index([isFeatured])
+}
+
+model AdminUser {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  name      String
+  role      String     @default("admin")
+  createdAt DateTime   @default(now())
+  lastLogin DateTime?
+  auditLogs AuditLog[]
+}
+
+model AuditLog {
+  id        String    @id @default(cuid())
+  adminId   String
+  admin     AdminUser @relation(fields: [adminId], references: [id])
+  action    String
+  target    String
+  details   String?
+  ip        String?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  @@index([adminId])
+  @@index([createdAt])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  ip        String
+  email     String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
+  @@index([email, createdAt])
+}
