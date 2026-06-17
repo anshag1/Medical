@@ -24,7 +24,7 @@ interface Props {
 
 async function getProducts(searchParams: Props['searchParams']) {
   const search = searchParams.search
-  const category = searchParams.category
+  const category = searchParams.category === 'all' ? undefined : searchParams.category
   const status = searchParams.status ?? 'all'
   const page = Math.max(1, parseInt(searchParams.page ?? '1'))
   const limit = 20
@@ -97,12 +97,12 @@ export default async function AdminProductsPage({ searchParams }: Props) {
             />
           </div>
 
-          <Select name="category" defaultValue={searchParams.category ?? ''}>
+          <Select name="category" defaultValue={searchParams.category ?? 'all'}>
             <SelectTrigger className="w-44">
               <SelectValue placeholder="All categories" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All categories</SelectItem>
+              <SelectItem value="all">All categories</SelectItem>
               {categories.map((cat) => (
                 <SelectItem key={cat} value={cat}>{cat}</SelectItem>
               ))}
@@ -123,7 +123,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
           <Button type="submit" variant="outline" size="sm">
             Filter
           </Button>
-          {(searchParams.search || searchParams.category || searchParams.status) && (
+          {(searchParams.search || (searchParams.category && searchParams.category !== 'all') || (searchParams.status && searchParams.status !== 'all')) && (
             <Button variant="ghost" size="sm" asChild>
               <Link href="/admin/products">Clear</Link>
             </Button>

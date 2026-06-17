@@ -10,6 +10,7 @@ import { createAuditLog } from '@/lib/audit'
 export interface LoginState {
   error?: string
   rateLimited?: boolean
+  success?: boolean
 }
 
 const credentialsSchema = z.object({
@@ -38,25 +39,33 @@ export async function loginAction(
     headersList.get('x-real-ip') ??
     '127.0.0.1'
 
-  // Rate-limit: 5 failed attempts per IP in 15 minutes
+  // Rate-limit: 5 failed attempts per IP OR 10 per email in 15 minutes
+  // Checking both prevents spoofed-IP bypass and targeted account brute-force
   const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000)
-  const failedCount = await prisma.loginAttempt.count({
-    where: { ip, success: false, createdAt: { gte: fifteenMinsAgo } },
-  })
+  const [ipFailedCount, emailFailedCount] = await Promise.all([
+    prisma.loginAttempt.count({
+      where: { ip, success: false, createdAt: { gte: fifteenMinsAgo } },
+    }),
+    prisma.loginAttempt.count({
+      where: { email, success: false, createdAt: { gte: fifteenMinsAgo } },
+    }),
+  ])
 
-  if (failedCount >= 5) {
+  if (ipFailedCount >= 5 || emailFailedCount >= 10) {
     return { error: 'Too many failed attempts. Please try again in 15 minutes.', rateLimited: true }
   }
 
   try {
-    await signIn('credentials', { email, password, redirectTo: '/admin/dashboard' })
+    await signIn('credentials', { email, password, redirect: false })
   } catch (error) {
-    // NEXT_REDIRECT is thrown on successful redirect — must be re-thrown
+    // NEXT_REDIRECT means NextAuth signed in successfully and wants to redirect.
+    // The session cookie is already set at this point — we swallow the redirect
+    // and let the client navigate via router.push so startTransition works correctly.
     if ((error as { digest?: string })?.digest?.startsWith('NEXT_REDIRECT')) {
       await prisma.loginAttempt
         .create({ data: { ip, email, success: true } })
         .catch((e) => console.error('Failed to record login attempt:', e))
-      throw error
+      return { success: true }
     }
 
     if (error instanceof AuthError) {
@@ -80,5 +89,9 @@ export async function loginAction(
     throw error
   }
 
-  return {}
+  // signIn succeeded without throwing (redirect: false path)
+  await prisma.loginAttempt
+    .create({ data: { ip, email, success: true } })
+    .catch((e) => console.error('Failed to record login attempt:', e))
+  return { success: true }
 }

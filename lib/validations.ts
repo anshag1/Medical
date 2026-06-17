@@ -27,8 +27,8 @@ export const productSchema = z.object({
   images: z
     .array(
       z.object({
-        original: z.string(),
-        thumb: z.string(),
+        original: z.string().regex(/^\/uploads\/products\/[a-z0-9_-]{1,64}\/[a-z0-9._-]{1,128}$/, 'Invalid image path'),
+        thumb: z.string().regex(/^\/uploads\/products\/[a-z0-9_-]{1,64}\/[a-z0-9._-]{1,128}$/, 'Invalid image path'),
       })
     )
     .default([]),
@@ -37,14 +37,14 @@ export const productSchema = z.object({
 export type ProductFormData = z.infer<typeof productSchema>
 
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email('Invalid email address').max(254),
+  password: z.string().min(1, 'Password is required').max(128),
 })
 
 export type LoginFormData = z.infer<typeof loginSchema>
 
 export const productFilterSchema = z.object({
-  search: z.string().optional(),
+  search: z.string().max(200).optional(),
   category: z.string().optional(),
   form: z.string().optional(),
   manufacturer: z.string().optional(),

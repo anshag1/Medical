@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { Search, LayoutGrid, List, SlidersHorizontal, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -39,7 +39,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced
 }
 
-export default function CataloguePage() {
+function CatalogueContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -344,5 +344,13 @@ export default function CataloguePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CataloguePage() {
+  return (
+    <Suspense>
+      <CatalogueContent />
+    </Suspense>
   )
 }

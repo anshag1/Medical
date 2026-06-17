@@ -25,6 +25,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'file and productId are required' }, { status: 400 })
   }
 
+  // Prevent path traversal via malicious productId
+  if (!/^[a-z0-9_-]{1,64}$/.test(productId)) {
+    return NextResponse.json({ error: 'Invalid productId' }, { status: 400 })
+  }
+
   if (!ALLOWED_TYPES.includes(file.type)) {
     return NextResponse.json({ error: 'Only JPG, PNG, and WebP images are accepted' }, { status: 415 })
   }

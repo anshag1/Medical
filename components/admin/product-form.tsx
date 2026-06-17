@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -32,8 +33,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ImageUploader } from '@/components/admin/image-uploader'
 import type { Product, ProductImage } from '@/types'
+
+// Loaded client-only — avoids hydration mismatch caused by browser file APIs
+// and next/image fill-mode differing between server and client renders.
+const ImageUploader = dynamic(
+  () => import('@/components/admin/image-uploader').then((m) => m.ImageUploader),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="border-2 border-dashed rounded-lg p-8 text-center text-sm text-muted-foreground">
+        Loading uploader…
+      </div>
+    ),
+  }
+)
 
 const FORM_TYPES = ['Tablet', 'Capsule', 'Syrup', 'Injection', 'Cream', 'Ointment', 'Drops', 'Inhaler', 'Patch', 'Suppository', 'Powder', 'Gel', 'Solution', 'Suspension']
 const COMMON_CATEGORIES = ['Antibiotics', 'Analgesics', 'Vitamins & Supplements', 'Cardiovascular', 'Dermatology', 'Antivirals', 'Antifungals', 'Antidiabetics', 'Antihistamines', 'Gastrointestinal']

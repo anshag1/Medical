@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
-import { Upload, X, Loader2, GripVertical } from 'lucide-react'
+import { Upload, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { ProductImage } from '@/types'
@@ -17,10 +17,11 @@ interface ImageUploaderProps {
 
 export function ImageUploader({
   productId,
-  images,
+  images: imagesProp,
   onChange,
   maxImages = 5,
 }: ImageUploaderProps) {
+  const images = imagesProp ?? []
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
 
@@ -142,7 +143,7 @@ export function ImageUploader({
                 variant="destructive"
                 size="icon"
                 className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => handleRemove(idx)}
+                onClick={() => void handleRemove(idx)}
               >
                 <X className="h-3 w-3" />
               </Button>
